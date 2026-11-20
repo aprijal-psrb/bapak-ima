@@ -1,0 +1,78 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+
+      - name: Siapkan JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Siapkan Gradle 8.7
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/gradle.zip" https://services.gradle.org/distributions/gradle-8.7-bin.zip
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-8.7/bin" >> "$GITHUB_PATH"
+
+      - name: Build APK (debug)
+        run: |
+          set -o pipefail
+          touch build.log
+          gradle --no-daemon --stacktrace assembleDebug 2>&1 | tee build.log
+
+      - name: Siapkan berkas APK
+        if: success()
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk dist/bapak-ima.apk
+          ls -lh dist
+
+      - name: Simpan APK sebagai artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bapak-ima-apk
+          path: dist/bapak-ima.apk
+          if-no-files-found: error
+
+      - name: Terbitkan APK ke Release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-terbaru
+          name: APK terbaru - Bapak Ima
+          body: |
+            APK hasil build otomatis dari kode di branch main.
+            Commit: ${{ github.sha }}
+          files: dist/bapak-ima.apk
+
+      - name: Siapkan log kegagalan
+        if: failure()
+        run: |
+          mkdir -p dist
+          tail -n 150 build.log > dist/log-build.txt || true
+
+      - name: Terbitkan log kegagalan
+        if: failure()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: log-build-gagal
+          name: Log build gagal
+          body_path: dist/log-build.txt
