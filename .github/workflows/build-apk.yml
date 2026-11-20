@@ -67,7 +67,13 @@ jobs:
         if: failure()
         run: |
           mkdir -p dist
-          tail -n 150 build.log > dist/log-build.txt || true
+          {
+            echo "=== Baris error ==="
+            grep -n -E "^e: |error:|FAILURE:|What went wrong|Execution failed|> Task .*FAILED|Caused by" build.log | head -n 80 || true
+            echo
+            echo "=== 40 baris terakhir ==="
+            tail -n 40 build.log || true
+          } > dist/log-build.txt
 
       - name: Terbitkan log kegagalan
         if: failure()
