@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bapak Ima</string>
+    <string name="alat_brush">Brush</string>
+    <string name="alat_pen">Pen</string>
+    <string name="aksi_hapus">Hapus</string>
+    <string name="aksi_simpan">Simpan</string>
+</resources>
