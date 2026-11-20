@@ -185,3 +185,4 @@ class DrawingView @JvmOverloads constructor(
         super.performClick()
         return true
     }
+}
